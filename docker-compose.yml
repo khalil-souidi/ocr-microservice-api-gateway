@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  # MySQL Service
+  mysql:
+    image: mysql:latest
+    container_name: mysql-ocr
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3307:3306"
+    networks:
+      - app-net
+
+  # phpMyAdmin for Database Management
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin-ocr
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "81:80"
+    depends_on:
+      - mysql
+    networks:
+      - app-net
+
+  # Prometheus Service
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-ocr
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitoring
+      - app-net
+
+  # Grafana Service
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-ocr
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Default Grafana password
+    ports:
+      - "3000:3000"  # Grafana on port 3000
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    volumes:
+      - grafana-data:/var/lib/grafana
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: Keycloak-ocr
+    ports:
+      - "9000:8080"
+    environment:
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "admin"
+    command:
+      - "start-dev"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - app-net
+networks:
+  monitoring:
+    driver: bridge
+  app-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  keycloak_data:
+  grafana-data:
