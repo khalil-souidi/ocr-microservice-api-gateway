@@ -6,3 +6,7 @@ spring:
           uri: lb://user-service
           predicates:
             - Path=/user/**
+        - id: ocr-service
+          uri: lb://ocr-service
+          predicates:
+            - Path=/ocr/**
